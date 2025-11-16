@@ -41,7 +41,29 @@ def do_dh_exchange(conn):
 	K = dhmod.compute_shared_key(B=reply.B, a=a, p=p)
 	return K
 
+def register_user():
+	with socket.socket() as s:
+		s.connect((HOST,PORT))
+		ca = open(CA_CERT,"rb").read()
+		ccrt = open(CLIENT_CERT,"rb").read()
+		send_json(s, Hello(type="hello", client_cert=ccrt.decode(), nonce=b64e(rand_bytes(16))).model_dump())
+		sh = ServerHello(**recv_json(s))
+		pki.verify_certificate_chain(sh.server_cert.encode(), ca, EXPECTED_SERVER_CN)
+		Kt = do_dh_exchange(s)
+		ivc = rand_bytes(16)
+		reg = RegisterRequest(email="test@example.com", username="test", password="test").model_dump()
+		send_json(s, {"type":"cred","ct": b64e(ivc + aesmod.encrypt_cbc(Kt,ivc,json.dumps(reg).encode()))})
+		_ = recv_json(s)  # cred_result
+		# server will now expect DH-2; we just close this registration session
+		return
+
 def main():
+	# Ensure user exists (registration in a separate session to match server flow)
+	try:
+		register_user()
+	except Exception:
+		pass
+	# New session for login + replay test
 	ca = open(CA_CERT,"rb").read()
 	ccrt = open(CLIENT_CERT,"rb").read()
 	ckey = open(CLIENT_KEY,"rb").read()
@@ -51,13 +73,8 @@ def main():
 		send_json(s, Hello(type="hello", client_cert=ccrt.decode(), nonce=b64e(rand_bytes(16))).model_dump())
 		sh = ServerHello(**recv_json(s))
 		pki.verify_certificate_chain(sh.server_cert.encode(), ca, EXPECTED_SERVER_CN)
-		# temp DH + register then login
+		# temp DH + login
 		Kt = do_dh_exchange(s)
-		# try register (ignore failure), then login
-		ivc = rand_bytes(16)
-		reg = RegisterRequest(email="test@example.com", username="test", password="test").model_dump()
-		send_json(s, {"type":"cred","ct": b64e(ivc + aesmod.encrypt_cbc(Kt,ivc,json.dumps(reg).encode()))})
-		_ = recv_json(s)
 		ivc = rand_bytes(16)
 		cred = LoginRequest(username="test", password="test").model_dump()
 		send_json(s, {"type":"cred","ct": b64e(ivc + aesmod.encrypt_cbc(Kt,ivc,json.dumps(cred).encode()))})
