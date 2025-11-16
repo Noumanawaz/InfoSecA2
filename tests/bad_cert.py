@@ -1,6 +1,13 @@
 import json
 import os
 import socket
+import sys
+
+# Ensure project root is on sys.path for "app" package imports when run as a script
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+	sys.path.insert(0, PROJECT_ROOT)
+
 from app.common.protocol import Hello
 from app.common.utils import b64e, rand_bytes
 
@@ -23,7 +30,7 @@ def main():
 	bad_cert_pem = "-----BEGIN CERTIFICATE-----\nMIIBbadCERT==\n-----END CERTIFICATE-----\n"
 	with socket.socket() as s:
 		s.connect((HOST,PORT))
-		send_json(s, Hello(type="hello", client_cert=bad_cert_pem, nonce=b64e(rand_bytes(16))).dict())
+		send_json(s, Hello(type="hello", client_cert=bad_cert_pem, nonce=b64e(rand_bytes(16))).model_dump())
 		# Depending on implementation, server may close or error on next read
 		try:
 			print(recv_json(s))
