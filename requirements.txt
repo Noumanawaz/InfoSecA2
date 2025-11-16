@@ -1,0 +1,6 @@
+cryptography
+mysql-connector-python
+python-dotenv
+pydantic
+rich
+psycopg2-binary
