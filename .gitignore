@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual envs
+venv/
+.venv/
+env/
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+
+# Environment / Secrets
+.env
+.env.*
+*.pem
+*.der
+*.p12
+
+# Certificates and private keys (keep placeholder files)
+certs/*.key
+certs/*.crt
+certs/*.csr
+certs/*.srl
+certs/*.pem
+!certs/.keep
+
+# Transcripts and receipts (keep placeholder)
+transcripts/*.log
+transcripts/receipt-*.json
+!transcripts/.keep
+
+# Logs / Captures
+*.log
+*.pcap
+*.pcapng
+
+# Coverage / build
+htmlcov/
+.coverage*
+build/
+dist/
+*.egg-info/
+
+
