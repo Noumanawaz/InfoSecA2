@@ -139,6 +139,11 @@ def handle_client(conn: socket.socket, addr):
 			ct_full = b64d(obj.ct)
 			iv_msg, ct_only = ct_full[:16], ct_full[16:]
 			plaintext = aesmod.decrypt_cbc(K, iv_msg, ct_only)
+			# Console visibility
+			try:
+				print(f"[C2S] {addr[0]}:{addr[1]} seq={obj.seq} ts={obj.ts} msg={plaintext.decode('utf-8')}")
+			except Exception:
+				print(f"[C2S] {addr[0]}:{addr[1]} seq={obj.seq} ts={obj.ts} (non-utf8 payload)")
 			# Append to transcript
 			tw.append_row({"dir": "C2S", "seq": obj.seq, "ts": obj.ts, "ct": obj.ct, "pt": plaintext.decode("utf-8")})
 
@@ -151,6 +156,10 @@ def handle_client(conn: socket.socket, addr):
 			reply_sig = b64e(rsamod.rsa_sign_sha256(server_priv, derive_sig_input(reply_seq, reply_ts, reply_ct_b64)))
 			send_json(conn, EncryptedMessage(type="msg", seq=reply_seq, ts=reply_ts, ct=reply_ct_b64, sig=reply_sig).model_dump())
 			tw.append_row({"dir": "S2C", "seq": reply_seq, "ts": reply_ts, "ct": reply_ct_b64})
+			try:
+				print(f"[S2C] seq={reply_seq} ts={reply_ts} msg={plaintext.decode('utf-8')}")
+			except Exception:
+				print(f"[S2C] seq={reply_seq} ts={reply_ts} (non-utf8 payload)")
 
 	except Exception:
 		# Best-effort receipt on error or close

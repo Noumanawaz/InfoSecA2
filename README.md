@@ -27,16 +27,37 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. MySQL (Docker suggested)
+2. Database (choose ONE)
 
-```bash
-docker run -d --name securechat-db \
-  -e MYSQL_ROOT_PASSWORD=rootpass \
-  -e MYSQL_DATABASE=securechat \
-  -e MYSQL_USER=scuser \
-  -e MYSQL_PASSWORD=scpass \
-  -p 3306:3306 mysql:8
-```
+- MySQL via Docker (quick start)
+
+  ```bash
+  docker run -d --name securechat-db \
+    -e MYSQL_ROOT_PASSWORD=rootpass \
+    -e MYSQL_DATABASE=securechat \
+    -e MYSQL_USER=scuser \
+    -e MYSQL_PASSWORD=scpass \
+    -p 3306:3306 mysql:8
+  ```
+
+- Native MySQL (Homebrew)
+
+  ```bash
+  brew install mysql@8.0
+  brew services start mysql@8.0
+  mysql -u root -e "CREATE DATABASE securechat; CREATE USER 'scuser'@'localhost' IDENTIFIED BY 'scpass'; GRANT ALL ON securechat.* TO 'scuser'@'localhost'; FLUSH PRIVILEGES;"
+  ```
+
+- PostgreSQL (alternative you can use)
+  ```bash
+  brew install postgresql@14
+  brew services start postgresql@14
+  psql -U postgres -c "CREATE DATABASE securechat;"
+  psql -U postgres -c "CREATE ROLE scuser WITH LOGIN PASSWORD 'scpass';"
+  psql -U postgres -c "ALTER DATABASE securechat OWNER TO scuser;"
+  psql -U postgres -d securechat -c "GRANT ALL ON SCHEMA public TO scuser;"
+  export PGHOST=127.0.0.1 PGPORT=5432 PGDATABASE=securechat PGUSER=scuser PGPASSWORD=scpass
+  ```
 
 3. Create schema
 
@@ -74,7 +95,7 @@ This writes:
 
 ## Run
 
-Server:
+Server (prints each message as it’s received/sent and saves transcripts/receipts):
 
 ```bash
 python -m app.server
@@ -145,6 +166,12 @@ Usage examples (with running server and a created test user):
 python tests/replay.py
 python tests/tamper.py
 python tests/bad_cert.py
+```
+
+If you use PostgreSQL for tests:
+
+```bash
+export PGHOST=127.0.0.1 PGPORT=5432 PGDATABASE=securechat PGUSER=scuser PGPASSWORD=scpass
 ```
 
 To create a test user, start client and choose Register.
